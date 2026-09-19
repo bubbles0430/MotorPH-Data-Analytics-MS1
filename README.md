@@ -2,7 +2,11 @@
 
 ## Project Overview
 
-This repository contains the Python script used for the descriptive analysis of the MotorPH Product List 2025 dataset. The analysis was conducted using Python and the pandas library in Jupyter Notebook.
+This repository contains the Python scripts used to clean and analyze the MotorPH Product List and Sales datasets for the 3rd Quarter of 2025. The workflow was conducted using Python and the pandas library in Jupyter Notebook.
+
+## Data Preprocessing
+
+`MotorPH_Preprocessing.ipynb` / `MotorPH_Preprocessing.py` load the raw Product List and Sales datasets, check for missing values and duplicates, correct mismatched product names and unit prices in the sales data against the official Product List, and export the cleaned datasets used by the analysis below.
 
 ## Analysis Objectives
 
@@ -36,8 +40,8 @@ The analysis examines:
 - Jupyter Notebook
 - Anaconda
 
-## Python Script
+## Python Scripts
 
-`MotorPH_Product_Analysis.py`
+`MotorPH_Preprocessing.py` – cleans the raw datasets and produces the cleaned CSV files.
 
-The script contains the Python/pandas workflow used to generate the descriptive statistics and findings presented in the Milestone 1 report.
+`MotorPH_Product_Analysis.py` – contains the Python/pandas workflow used to generate the descriptive statistics and findings presented in the Milestone 1 report.
