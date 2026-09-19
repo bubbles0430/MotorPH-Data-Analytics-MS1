@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+
+# In[ ]:
 
 
 import pandas as pd
 
 
-# In[2]:
+# In[ ]:
 
 
 import os
@@ -16,49 +17,41 @@ print(os.getcwd())
 print(os.listdir())
 
 
-# In[3]:
+# In[ ]:
 
 
-desktop = "/Users/snorlax/Desktop"
+products = pd.read_csv("MotorPH_Products_List_2025.csv")
 
-print(os.listdir(desktop))
-
-
-# In[4]:
+sales = pd.read_csv("MotorPH_Sales Data-3rd Quarter-Year 2025.csv")
 
 
-products = pd.read_csv("/Users/snorlax/Desktop/MotorPH_Products_List_2025.csv")
-
-sales = pd.read_csv("/Users/snorlax/Desktop/MotorPH_Sales Data-3rd Quarter-Year 2025.csv")
-
-
-# In[5]:
+# In[ ]:
 
 
 products.head()
 
 
-# In[6]:
+# In[ ]:
 
 
 sales.head()
 
 
-# In[7]:
+# In[ ]:
 
 
 print("=== PRODUCT LIST INFORMATION ===")
 products.info()
 
 
-# In[8]:
+# In[ ]:
 
 
 print("=== SALES DATASET INFORMATION ===")
 sales.info()
 
 
-# In[10]:
+# In[ ]:
 
 
 print("=== PRODUCT LIST MISSING VALUES ===")
@@ -68,7 +61,7 @@ print("\n=== SALES DATASET MISSING VALUES ===")
 print(sales.isnull().sum())
 
 
-# In[11]:
+# In[ ]:
 
 
 print("=== PRODUCT LIST DUPLICATES ===")
@@ -78,7 +71,7 @@ print("\n=== SALES DATASET DUPLICATES ===")
 print("Duplicate rows:", sales.duplicated().sum())
 
 
-# In[12]:
+# In[ ]:
 
 
 print("Duplicate Product IDs:", products["EntrNo"].duplicated().sum())
@@ -86,7 +79,7 @@ print("Product IDs:")
 print(products["EntrNo"].tolist())
 
 
-# In[13]:
+# In[ ]:
 
 
 print("=== PRODUCT NAMES ===")
@@ -99,8 +92,7 @@ print("\n=== SALES PAYMENT TYPES ===")
 print(sales["payment"].value_counts(dropna=False))
 
 
-
-# In[15]:
+# In[ ]:
 
 
 product_types = products["EntrDetails"].str.split("/").str[0].str.strip()
@@ -109,9 +101,7 @@ print("=== PRODUCT TYPES ===")
 print(product_types.value_counts())
 
 
-
-
-# In[17]:
+# In[ ]:
 
 
 products_clean = products.copy()
@@ -120,7 +110,7 @@ sales_clean = sales.copy()
 print("Clean copies created successfully.")
 
 
-# In[18]:
+# In[ ]:
 
 
 missing_sales = sales_clean[
@@ -130,17 +120,7 @@ missing_sales = sales_clean[
 missing_sales
 
 
-# In[19]:
-
-
-sales_clean["client_type"] = sales_clean["client_type"].fillna("Unknown")
-sales_clean["payment"] = sales_clean["payment"].fillna("Unknown")
-
-print("Missing values after filling categorical fields:")
-print(sales_clean.isnull().sum())
-
-
-# In[21]:
+# In[ ]:
 
 
 sales_clean = sales.copy()
@@ -158,7 +138,7 @@ print("Date type:", sales_clean["date"].dtype)
 print("Missing dates:", sales_clean["date"].isnull().sum())
 
 
-# In[22]:
+# In[ ]:
 
 
 test_dates = pd.to_datetime(
@@ -175,7 +155,7 @@ print("Dates that failed conversion:")
 print(failed_dates[["date"]])
 
 
-# In[23]:
+# In[ ]:
 
 
 sales_clean = sales_clean.dropna(subset=["date"]).copy()
@@ -184,7 +164,7 @@ print("Rows remaining:", len(sales_clean))
 print("Missing dates:", sales_clean["date"].isnull().sum())
 
 
-# In[24]:
+# In[ ]:
 
 
 sales_clean["calculated_total"] = (
@@ -199,7 +179,7 @@ print("Rows with incorrect totals:", len(mismatched_totals))
 mismatched_totals.head()
 
 
-# In[25]:
+# In[ ]:
 
 
 price_lookup = products_clean.set_index("EntrName")["UnitPrice"]
@@ -217,7 +197,7 @@ price_mismatches[
 ].head(20)
 
 
-# In[26]:
+# In[ ]:
 
 
 unmatched_products = sales_clean[
@@ -228,7 +208,7 @@ print("=== SALES PRODUCTS NOT FOUND IN PRODUCT LIST ===")
 print(unmatched_products)
 
 
-# In[27]:
+# In[ ]:
 
 
 from difflib import get_close_matches
@@ -247,7 +227,7 @@ for name in unmatched_products.index:
     print(name, "->", matches)
 
 
-# In[28]:
+# In[ ]:
 
 
 product_name_corrections = {
@@ -271,7 +251,7 @@ sales_clean["product"] = sales_clean["product"].replace(product_name_corrections
 print("Product names corrected.")
 
 
-# In[29]:
+# In[ ]:
 
 
 price_lookup = products_clean.set_index("EntrName")["UnitPrice"]
@@ -284,7 +264,7 @@ print(
 )
 
 
-# In[30]:
+# In[ ]:
 
 
 price_mismatches = sales_clean[
@@ -298,7 +278,7 @@ price_mismatches[
 ].head(20)
 
 
-# In[31]:
+# In[ ]:
 
 
 # Correct mismatched unit prices using the official Product List price
@@ -309,6 +289,13 @@ sales_clean.loc[
 
 # Recalculate total based on corrected unit price
 sales_clean["total"] = (
+    sales_clean["unitprice"] * sales_clean["quantity"]
+)
+
+# Refresh calculated_total too -- previously this was left stale from before
+# the price correction above, so for any row whose unitprice just changed,
+# calculated_total no longer matched total/unitprice/quantity in the saved file.
+sales_clean["calculated_total"] = (
     sales_clean["unitprice"] * sales_clean["quantity"]
 )
 
@@ -324,8 +311,14 @@ print(
      sales_clean["unitprice"] * sales_clean["quantity"]).sum()
 )
 
+print(
+    "Remaining stale calculated_total rows:",
+    (sales_clean["calculated_total"] !=
+     sales_clean["unitprice"] * sales_clean["quantity"]).sum()
+)
 
-# In[32]:
+
+# In[ ]:
 
 
 print("=== FINAL CLEANING VALIDATION ===")
@@ -358,26 +351,25 @@ print(
 )
 
 
-# In[33]:
+# In[ ]:
 
 
 products_clean.to_csv(
-    "/Users/snorlax/Desktop/MotorPH_Products_List_2025_Cleaned.csv",
+    "MotorPH_Products_List_2025_Cleaned.csv",
     index=False
 )
 
-sales_clean.to_csv(
-    "/Users/snorlax/Desktop/MotorPH_Sales_2025_Cleaned.csv",
+# product_list_price was only a lookup helper used to find/verify price
+# mismatches -- it always equals unitprice once cleaning is done, so it
+# does not need to ship in the final file.
+sales_clean_to_save = sales_clean.drop(columns=["product_list_price"])
+
+sales_clean_to_save.to_csv(
+    "MotorPH_Sales_2025_Cleaned.csv",
     index=False
 )
 
 print("Cleaned files saved successfully!")
 print("Product List: MotorPH_Products_List_2025_Cleaned.csv")
 print("Sales Dataset: MotorPH_Sales_2025_Cleaned.csv")
-
-
-# In[ ]:
-
-
-
 
