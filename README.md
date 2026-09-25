@@ -116,7 +116,7 @@ Every statistic in the accompanying report was independently recomputed directly
 ---
 
 ## Contributors: Documentation
-
+https://docs.google.com/document/d/1VFg7gmGbCpslOg42giInZZzJ0qiP5IykUMUImtbMHe4/edit?usp=sharing
 - Keren Jemimah Tabor-Abueg
 - Christian Jess Torrefiel
 - Xyril Anne Fabellon
