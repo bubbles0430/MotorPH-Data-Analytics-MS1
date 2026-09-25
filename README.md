@@ -112,3 +112,12 @@ manufacturing_counts = df["Manufacturing Date"].value_counts().sort_index()
 ## 4. What was verified, and how
 
 Every statistic in the accompanying report was independently recomputed directly from the cleaned CSV files with pandas — not just copied from a notebook's saved output — specifically so that a stale or manually-edited output cell couldn't slip an incorrect number into the final report. The `calculated_total` staleness bug (§2.8) was caught this way: comparing the report's numbers against a fresh, independent recalculation surfaced a mismatch that a plain re-read of the notebook would have missed, because the notebook's *old* saved output looked internally consistent even though it no longer matched the underlying corrected data.
+
+---
+
+## Contributors: Documentation
+
+- Keren Jemimah Tabor-Abueg
+- Christian Jess Torrefiel
+- Xyril Anne Fabellon
+- Reymar Navarro
