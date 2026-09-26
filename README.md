@@ -107,11 +107,35 @@ manufacturing_counts = df["Manufacturing Date"].value_counts().sort_index()
 ```
 `value_counts()` on its own sorts by *frequency* (most common year first), which is not useful when the years represent a timeline — you want 2018, 2019, 2020… in order so a trend over time is actually readable, not shuffled by which year happens to have the most products.
 
+### 3.5 Why `groupby("Product Type")` is used instead of relying on the single overall average price
+```python
+price_by_type = df.groupby("Product Type")["UnitPrice"].agg(
+    ["mean", "min", "max", "count"]
+).sort_values("mean", ascending=False)
+```
+The overall average price (§3.3) tells you one number for the whole inventory, but it hides how much that number varies *between* categories — a single average can't tell you whether Scooters and Heritage bikes are priced similarly or wildly differently. Grouping by `Product Type` before aggregating breaks the single average into one average (plus min, max, and count) per category, which is what actually let us discover that Heritage motorcycles average ₱842,000 while Commuter bikes average only ₱57,950 — a gap the single overall average completely hides. Sorting the result by mean price, rather than leaving it in whatever order the categories first appear, also makes the highest- and lowest-priced categories immediately readable without having to scan the whole table.
+
 ---
 
 ## 4. What was verified, and how
 
 Every statistic in the accompanying report was independently recomputed directly from the cleaned CSV files with pandas — not just copied from a notebook's saved output — specifically so that a stale or manually-edited output cell couldn't slip an incorrect number into the final report. The `calculated_total` staleness bug (§2.8) was caught this way: comparing the report's numbers against a fresh, independent recalculation surfaced a mismatch that a plain re-read of the notebook would have missed, because the notebook's *old* saved output looked internally consistent even though it no longer matched the underlying corrected data.
+
+---
+
+## 5. Common issues and troubleshooting
+
+- **`FileNotFoundError` when reading a CSV.** The notebooks use relative filenames (§2.9), so this almost always means the notebook and the CSV are not in the same folder, or the filename doesn't match exactly (check for hidden trailing spaces or a different file extension, e.g. `.csv` vs `.CSV`). Fix: place the `.ipynb` and the `.csv` files together in one folder, and confirm the filename in the code matches the actual file exactly.
+- **`KeyError` on a column name (e.g. `"UnitPrice"`, `"EntrDetails"`).** This means the DataFrame doesn't have a column by that exact name — usually because `MotorPH_Product_Analysis.ipynb` was run against the *raw* Products List instead of the *cleaned* one. Fix: run `MotorPH_Preprocessing.ipynb` completely first, confirm `MotorPH_Products_List_2025_Cleaned.csv` was created, and make sure the analysis notebook reads that cleaned file, not the raw one.
+- **Numbers in a fresh run don't match the numbers in the report.** This is expected if you run only *part* of a notebook, or run cells out of order — later cells (e.g. `groupby` price comparisons) depend on columns created by earlier cells (e.g. the derived `Product Type` column in §3.1). Fix: use Restart & Run All (or Runtime → Run all in Colab) rather than re-running individual cells out of sequence.
+- **A `NaN`/`NaT` shows up somewhere unexpected after re-running.** This is usually not a bug — it's the intended result of `errors="coerce"` (§2.4) or `.fillna("Unknown")` (§2.3) doing exactly what they're designed to do. Before treating it as an error, check whether that row was already flagged as having a missing or unparseable value in the earlier diagnostic step (§2.2).
+- **The corrected product-name dictionary doesn't cover a name you're seeing.** This means the raw data has a typo variant that wasn't present when `product_name_corrections` (§2.6) was built. Fix: run the `get_close_matches` suggestion step again on the current data and extend the dictionary — don't assume the existing dictionary is exhaustive for a different or updated dataset.
+
+---
+
+## 6. Real-world relevance
+
+Beyond satisfying the assignment's cleaning and analysis requirements, the specific choices documented here map onto decisions a real inventory or sales team would actually have to make. Treating the Product List as the price source of truth (§2.7) mirrors how a business reconciles a transactional system against a master catalog when the two disagree. Recording unmatched categories as `"Unknown"` instead of silently dropping rows (§2.3) mirrors how a real reporting pipeline should degrade gracefully instead of quietly losing data. And the category-level price comparison (§3.5) is the kind of finding that has direct business value: discovering that Scooters are MotorPH's highest-*volume* category but not its highest-*priced* one is exactly the sort of insight that would inform pricing strategy, inventory investment, or marketing focus in an actual dealership setting — not just an artifact of the assignment.
 
 ---
 
