@@ -2,13 +2,27 @@
 # coding: utf-8
 
 
-# In[1]:
+# ======================================================================
+# # MotorPH Sales Data Preprocessing
+# 
+# Cleans the raw Product List and Sales datasets and saves the cleaned versions for use in the Product Analysis notebook.
+# ======================================================================
+
+# ======================================================================
+# ## 1. Import Library
+# ======================================================================
+
+# In[ ]:
 
 
 import pandas as pd
 
 
-# In[2]:
+# ======================================================================
+# ## 2. Load the Datasets
+# ======================================================================
+
+# In[ ]:
 
 
 # Confirm the current working directory and check that the expected files are here
@@ -18,7 +32,7 @@ print(os.getcwd())
 print(os.listdir())
 
 
-# In[3]:
+# In[ ]:
 
 
 # Load the raw Product List and raw Sales datasets
@@ -27,21 +41,25 @@ products = pd.read_csv("MotorPH_Products_List_2025.csv")
 sales = pd.read_csv("MotorPH_Sales Data-3rd Quarter-Year 2025.csv")
 
 
-# In[4]:
+# ======================================================================
+# ## 3. Inspect the Datasets
+# ======================================================================
+
+# In[ ]:
 
 
 # Preview the first few rows of the Product List dataset
 products.head()
 
 
-# In[5]:
+# In[ ]:
 
 
 # Preview the first few rows of the Sales dataset
 sales.head()
 
 
-# In[6]:
+# In[ ]:
 
 
 # Check column names, data types, and non-null counts for the Product List
@@ -49,7 +67,7 @@ print("=== PRODUCT LIST INFORMATION ===")
 products.info()
 
 
-# In[7]:
+# In[ ]:
 
 
 # Check column names, data types, and non-null counts for the Sales dataset
@@ -57,29 +75,27 @@ print("=== SALES DATASET INFORMATION ===")
 sales.info()
 
 
-# In[8]:
+# In[ ]:
 
 
-# Check both datasets for missing values
-print("=== PRODUCT LIST MISSING VALUES ===")
-print(products.isnull().sum())
+# Define a reusable data-quality check instead of writing the same
+# missing-value and duplicate checks out separately for each dataset --
+# this way both datasets are checked with identical logic, and adding a
+# third dataset later would only need one extra function call, not a
+# third copy of these print statements
+def check_data_quality(dataframe, name):
+    print(f"=== {name.upper()} DATA QUALITY CHECK ===")
+    print("Shape:", dataframe.shape)
+    print("Duplicate rows:", dataframe.duplicated().sum())
+    print("Missing values per column:")
+    print(dataframe.isnull().sum())
+    print()
 
-print("\n=== SALES DATASET MISSING VALUES ===")
-print(sales.isnull().sum())
-
-
-# In[9]:
-
-
-# Check both datasets for fully duplicated rows
-print("=== PRODUCT LIST DUPLICATES ===")
-print("Duplicate rows:", products.duplicated().sum())
-
-print("\n=== SALES DATASET DUPLICATES ===")
-print("Duplicate rows:", sales.duplicated().sum())
+check_data_quality(products, "Product List")
+check_data_quality(sales, "Sales Dataset")
 
 
-# In[10]:
+# In[ ]:
 
 
 # Confirm every product has a unique EntrNo, and list all product IDs
@@ -88,7 +104,7 @@ print("Product IDs:")
 print(products["EntrNo"].tolist())
 
 
-# In[11]:
+# In[ ]:
 
 
 # Review product names, and the categorical values in the Sales dataset
@@ -102,7 +118,7 @@ print("\n=== SALES PAYMENT TYPES ===")
 print(sales["payment"].value_counts(dropna=False))
 
 
-# In[12]:
+# In[ ]:
 
 
 # Preview how Product Type looks when extracted from EntrDetails
@@ -114,7 +130,11 @@ print("=== PRODUCT TYPES ===")
 print(product_types.value_counts())
 
 
-# In[13]:
+# ======================================================================
+# ## 4. Create Working Copies
+# ======================================================================
+
+# In[ ]:
 
 
 # Create working copies so the original raw data is never modified directly
@@ -124,7 +144,28 @@ sales_clean = sales.copy()
 print("Clean copies created successfully.")
 
 
-# In[14]:
+# ======================================================================
+# ## 5. Remove Duplicate Rows
+# ======================================================================
+
+# In[ ]:
+
+
+# Remove exact duplicate rows from both cleaned datasets, and reset
+# the index afterward so it runs cleanly from 0 with no gaps
+products_clean = products_clean.drop_duplicates().reset_index(drop=True)
+sales_clean = sales_clean.drop_duplicates().reset_index(drop=True)
+
+print("Duplicate rows remaining after removal:")
+print("Product List:", products_clean.duplicated().sum())
+print("Sales Dataset:", sales_clean.duplicated().sum())
+
+
+# ======================================================================
+# ## 6. Handle Missing and Invalid Dates
+# ======================================================================
+
+# In[ ]:
 
 
 # Identify which sales rows have a missing date, client_type, or payment value
@@ -135,7 +176,7 @@ missing_sales = sales_clean[
 missing_sales
 
 
-# In[15]:
+# In[ ]:
 
 
 # Fill missing categorical values with "Unknown" and convert the date
@@ -155,7 +196,7 @@ print("Date type:", sales_clean["date"].dtype)
 print("Missing dates:", sales_clean["date"].isnull().sum())
 
 
-# In[16]:
+# In[ ]:
 
 
 # Identify which date values could not be parsed, so we know what will be dropped
@@ -173,7 +214,7 @@ print("Dates that failed conversion:")
 print(failed_dates[["date"]])
 
 
-# In[17]:
+# In[ ]:
 
 
 # Drop the handful of rows with unparseable/invalid dates
@@ -183,7 +224,11 @@ print("Rows remaining:", len(sales_clean))
 print("Missing dates:", sales_clean["date"].isnull().sum())
 
 
-# In[18]:
+# ======================================================================
+# ## 7. Validate and Correct Sales Totals and Prices
+# ======================================================================
+
+# In[ ]:
 
 
 # Recompute total from unitprice x quantity and flag rows where the
@@ -200,7 +245,7 @@ print("Rows with incorrect totals:", len(mismatched_totals))
 mismatched_totals.head()
 
 
-# In[19]:
+# In[ ]:
 
 
 # Look up each sale's official unit price from the Product List and
@@ -220,7 +265,7 @@ price_mismatches[
 ].head(20)
 
 
-# In[20]:
+# In[ ]:
 
 
 # List sales product names that don't match any name in the Product
@@ -233,7 +278,7 @@ print("=== SALES PRODUCTS NOT FOUND IN PRODUCT LIST ===")
 print(unmatched_products)
 
 
-# In[21]:
+# In[ ]:
 
 
 # Use fuzzy string matching to suggest the correct product name for
@@ -254,7 +299,7 @@ for name in unmatched_products.index:
     print(name, "->", matches)
 
 
-# In[22]:
+# In[ ]:
 
 
 # Apply the manually verified corrections for the typo'd product names
@@ -279,7 +324,7 @@ sales_clean["product"] = sales_clean["product"].replace(product_name_corrections
 print("Product names corrected.")
 
 
-# In[23]:
+# In[ ]:
 
 
 # Re-check the price lookup now that the product names have been corrected
@@ -293,7 +338,7 @@ print(
 )
 
 
-# In[24]:
+# In[ ]:
 
 
 # Confirm which rows still have a unit price that disagrees with the Product List
@@ -308,7 +353,7 @@ price_mismatches[
 ].head(20)
 
 
-# In[25]:
+# In[ ]:
 
 
 # Correct mismatched unit prices using the official Product List price
@@ -348,7 +393,11 @@ print(
 )
 
 
-# In[26]:
+# ======================================================================
+# ## 8. Final Validation
+# ======================================================================
+
+# In[ ]:
 
 
 # Run a final set of checks to confirm both datasets are fully cleaned
@@ -382,7 +431,11 @@ print(
 )
 
 
-# In[27]:
+# ======================================================================
+# ## 9. Save Cleaned Datasets
+# ======================================================================
+
+# In[ ]:
 
 
 # Save the cleaned Product List and Sales datasets for use in the

@@ -2,6 +2,16 @@
 # coding: utf-8
 
 
+# ======================================================================
+# # MotorPH Product Analysis
+# 
+# Descriptive analysis of the cleaned Product List dataset: category distribution, pricing, and manufacturing/acquisition trends.
+# ======================================================================
+
+# ======================================================================
+# ## 1. Import Library and Load Dataset
+# ======================================================================
+
 # In[1]:
 
 
@@ -13,6 +23,10 @@ df = pd.read_csv("MotorPH_Products_List_2025_Cleaned.csv")
 
 print("Dataset loaded successfully!")
 
+
+# ======================================================================
+# ## 2. Inspect the Dataset
+# ======================================================================
 
 # In[2]:
 
@@ -45,6 +59,10 @@ total_products = len(df)
 print("Total Number of Products:", total_products)
 
 
+# ======================================================================
+# ## 3. Analyze Product Categories
+# ======================================================================
+
 # In[5]:
 
 
@@ -63,6 +81,17 @@ df[["EntrName", "EntrDetails", "Product Type"]].head()
 # In[6]:
 
 
+# List the distinct Product Type categories in the dataset
+df["Product Type"].unique()
+
+
+# ======================================================================
+# ### Counting Categories
+# ======================================================================
+
+# In[7]:
+
+
 # Count how many products fall into each Product Type
 product_counts = df["Product Type"].value_counts()
 
@@ -70,7 +99,19 @@ print("=== COUNTS BY PRODUCT TYPE ===")
 print(product_counts)
 
 
-# In[7]:
+# ======================================================================
+# ## 4. Analyze Unit Price
+# ======================================================================
+
+# In[8]:
+
+
+# Get a full statistical summary (count, mean, std, min, quartiles,
+# max) of the numeric columns in one call
+df[["UnitPrice", "Manufacturing Date", "Acquisiton"]].describe()
+
+
+# In[9]:
 
 
 # Calculate the average, minimum, and maximum unit price across all products
@@ -84,7 +125,7 @@ print(f"Minimum Unit Price: ₱{minimum_price:,.2f}")
 print(f"Maximum Unit Price: ₱{maximum_price:,.2f}")
 
 
-# In[8]:
+# In[10]:
 
 
 # Group products by Product Type to compare average, minimum, and
@@ -101,7 +142,7 @@ print("=== AVERAGE UNIT PRICE BY PRODUCT TYPE ===")
 price_by_type
 
 
-# In[9]:
+# In[11]:
 
 
 # Identify the cheapest and most expensive products
@@ -125,7 +166,7 @@ print(
 )
 
 
-# In[10]:
+# In[12]:
 
 
 # Calculate the total value of the inventory (sum of all unit prices)
@@ -137,7 +178,37 @@ print(
 )
 
 
-# In[11]:
+# ======================================================================
+# ## 5. Checking for Anomalies
+# ======================================================================
+
+# In[13]:
+
+
+# Flag unit prices that fall far outside the typical range, using
+# the IQR (interquartile range) method
+Q1 = df["UnitPrice"].quantile(0.25)
+Q3 = df["UnitPrice"].quantile(0.75)
+IQR = Q3 - Q1
+
+lower_bound = Q1 - 1.5 * IQR
+upper_bound = Q3 + 1.5 * IQR
+
+price_anomalies = df[
+    (df["UnitPrice"] < lower_bound) | (df["UnitPrice"] > upper_bound)
+]
+
+print(f"Normal price range: PHP{lower_bound:,.2f} to PHP{upper_bound:,.2f}")
+print("Number of price anomalies found:", len(price_anomalies))
+
+price_anomalies[["EntrName", "Product Type", "UnitPrice"]]
+
+
+# ======================================================================
+# ## 6. Product Distribution Summary
+# ======================================================================
+
+# In[14]:
 
 
 # Build a summary table showing both the count and percentage share
@@ -152,7 +223,11 @@ product_distribution = pd.DataFrame({
 product_distribution
 
 
-# In[12]:
+# ======================================================================
+# ## 7. Analyze Manufacturing and Acquisition Trends
+# ======================================================================
+
+# In[15]:
 
 
 # Count products by manufacturing year, sorted chronologically
@@ -162,7 +237,7 @@ print("=== PRODUCTS BY MANUFACTURING YEAR ===")
 print(manufacturing_counts)
 
 
-# In[13]:
+# In[16]:
 
 
 # Count products by acquisition year, sorted chronologically
@@ -170,4 +245,31 @@ acquisition_counts = df["Acquisiton"].value_counts().sort_index()
 
 print("=== PRODUCTS BY ACQUISITION YEAR ===")
 print(acquisition_counts)
+
+
+# ======================================================================
+# ## 8. Analyze Relationships Between Variables
+# ======================================================================
+
+# In[17]:
+
+
+# Check whether unit price relates to manufacturing year or
+# acquisition year, using a correlation matrix
+correlation = df[["UnitPrice", "Manufacturing Date", "Acquisiton"]].corr()
+
+print("=== CORRELATION BETWEEN UNIT PRICE AND YEAR COLUMNS ===")
+correlation
+
+
+# ======================================================================
+# ## 9. Sorting Data
+# ======================================================================
+
+# In[18]:
+
+
+# Sort products by unit price, from highest to lowest, and preview
+# the top few rows
+df.sort_values("UnitPrice", ascending=False).head()
 
